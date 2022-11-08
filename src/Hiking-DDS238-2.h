@@ -22,9 +22,25 @@ class Hiking_DDS238_2{
   
     
 public:
+
   typedef enum {
     stReady, stWait_for_resp, stDone, stTimeout, stErrCs, stErr,    
   } reqStatus_t; 
+
+  typedef enum {
+    statusOk, statusErr,   
+  } cntStatus_t;
+
+  typedef struct {
+    double u;
+    double i;
+    double p;
+    double pf;
+    double f;
+    uint32_t totalCnt; 
+    cntStatus_t status;   
+  } results_t;
+
   Hiking_DDS238_2(Stream *uart, unsigned long timeout):m_uart(uart), m_timeout(timeout), m_rxCount(0){};
   uint16_t regReq(uint8_t id){return regReq(id, REG_ADR_BEGIN, REQ_REG_COUNT);};
   reqStatus_t getReqStatus();
@@ -37,4 +53,6 @@ public:
   double  getCounterPF(); 
   double  getCounterF(); 
   uint32_t getCounterTotal(); 
+  results_t getResults();
+  void polling();
 };

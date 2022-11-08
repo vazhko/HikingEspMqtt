@@ -53,12 +53,12 @@ uint16_t Hiking_DDS238_2::regReq(uint8_t id, uint16_t adr, uint16_t count){
 
 /******************************************************************************************/
 Hiking_DDS238_2::reqStatus_t Hiking_DDS238_2::getReqStatus(){
-  if (m_time == 0) return stReady;
+  if (m_time == 0) return reqStatus_t::stReady;
   if((millis() - m_time) > m_timeout) return stTimeout;
   if(m_rxCount > m_uart->available()) return stWait_for_resp;
   if(m_rxCount < m_uart->available()) {
      m_uart->flush();   
-    return stErr;
+    return reqStatus_t::stErr;
   }    
   if(m_rxCount == m_uart->available()){
     m_uart->read(m_rxBuff, m_rxCount); 
@@ -69,6 +69,7 @@ Hiking_DDS238_2::reqStatus_t Hiking_DDS238_2::getReqStatus(){
   return stDone;
 }
 
+/******************************************************************************************/
 int16_t Hiking_DDS238_2::getRegVal(int16_t regNum){
   return (m_rxBuff[3 + regNum * 2] << 8) | (m_rxBuff[4 + regNum * 2] << 0);
 }
@@ -76,6 +77,7 @@ int32_t Hiking_DDS238_2::getRegVal32(int16_t regNum){
   return (m_rxBuff[3 + regNum * 2] << 24) | (m_rxBuff[4 + regNum * 2] << 16) | (m_rxBuff[5 + regNum * 2] << 8) | (m_rxBuff[6 + regNum * 2] << 0);
 }
 
+/******************************************************************************************/
 double  Hiking_DDS238_2::getCounterU(){
   return (double) getRegVal(12) / 10.0;
 }
@@ -93,5 +95,22 @@ double  Hiking_DDS238_2::getCounterF(){
 }
 uint32_t Hiking_DDS238_2::getCounterTotal(){
   return getRegVal32(0);
+}
+
+/******************************************************************************************/
+Hiking_DDS238_2::results_t Hiking_DDS238_2::getResults(){
+  results_t res;
+  res.u = getCounterU();
+  res.i = getCounterI();
+  res.p = getCounterP();
+  res.pf = getCounterPF();
+  res.f = getCounterF();
+  res.totalCnt = getCounterTotal();
+  res.status = statusOk;
+  return res;
+}
+
+void Hiking_DDS238_2::polling(){
+  
 }
 

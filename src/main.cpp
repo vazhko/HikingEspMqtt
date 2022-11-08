@@ -2,15 +2,14 @@
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <ESP8266WiFi.h> 
-//#include <Wire.h>
-//#include "SparkFunHTU21D.h"
-//#include <OneWire.h>
-//#include <DallasTemperature.h>
 #include <SoftwareSerial.h>
 //#include <Preferences.h>
-#include <ESP8266WebServer.h>
-#include <ESP8266mDNS.h>
+//#include <ESP8266WebServer.h>
+//#include <ESP8266mDNS.h>
 #include "Hiking-DDS238-2.h"
+#include "webSrv.h"
+#include <PubSubClient.h>
+
 
 #define COUNTER_ID 1
 
@@ -19,43 +18,31 @@
 #define RS485_TX  2
 SoftwareSerial mySerial;
 
-//HTU21D myHumidity;  
-//Preferences prefs;
  
 const char* ssid = "Keenetic-2568";
 const char* password = "T9TW8iHR"; 
+const char* adr_mqtt_server = "192.168.1.90";
 
-//WiFiServer mbServer(333);
-ESP8266WebServer webServer(80);
 
-//const int oneWireBus = 13;
-//OneWire oneWire(oneWireBus);
-//DallasTemperature sensors(&oneWire);
 
-const long utcOffsetInSeconds = 3*3600;//+3
-WiFiUDP ntpUDP; // Define NTP Client to get time
-NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
-
+//ESP8266WebServer webServer(80);
+WiFiClient espClient;
+PubSubClient client(espClient);
 Hiking_DDS238_2 counter(&mySerial, 1000);
 
 
-void handleRootPath();
+
+
 void hikingPolling();
-void handleNotFound();
+void mqtt_reconnect();
+void mqtt_callback(char* topic, byte* payload, unsigned int length);
+void counter_callback(Hiking_DDS238_2::results_t* res);
 
  
 void setup() {
   Serial.begin(115200);
   Serial.print("Start...");
                                                        
-  //myHumidity.begin();
-  //sensors.begin();
-  timeClient.begin();
-  //prefs.begin("my-app");
-  //char counter = prefs.getChar("counter", 1); 
-  //Serial.print("Counter is ");
-  //Serial.println(counter, HEX);   
-
 
   Serial.print("Connecting to ");
   Serial.println(ssid);
@@ -75,140 +62,39 @@ void setup() {
   pinMode (RS485_TX, OUTPUT); 
   digitalWrite (RS485_TX, LOW);
 
-  //mbServer.begin();
-  
-  webServer.on("/index.html", handleRootPath);
-  webServer.on("/other.html", []() {   //Определите функцию обработки для пути
-    webServer.send(200, "text / plain", "Additional page");
-  });
-  webServer.onNotFound(handleNotFound);  
-  webServer.begin();  
+  webSrv::init();
+
+  client.setServer(adr_mqtt_server, 1883);
+  client.setCallback(mqtt_callback); 
                                  
 }
 
 
  
-void loop(){ 
-  //mbServerTask(); 
-  webServer.handleClient(); 
-  hikingPolling();        
-}
-/*
-void mbServerTask(){
-  static uint8_t connected = 0;
-  mySerial.listen();
-  WiFiClient client = mbServer.available();
-
-  if (client) {
-    
-    if(client.connected()) {
-      if(!connected) {
-        Serial.println("\nclient.connected");
-      } 
-      connected = 1;    
-    }  else {
-      if(connected) {           
-        Serial.println("\nclient.disconnected");
-      } 
-      client.stop(); 
-      connected = 0;
-    }
-    
-    while (client.connected()) {
-            
-      if(client.available()) {
-        size_t len = client.available();
-        uint8_t sbuf[len];
-        client.read(sbuf, len);               
-        digitalWrite (RS485_TX, HIGH);
-        delay(5);    
-        mySerial.write(sbuf, len);
-        delay(5);
-        digitalWrite (RS485_TX, LOW);
-        //Serial.writeBytes(sbuf, len);
-        Serial.print("TCP: ");
-        Serial.println(len);
-      }
-
-      int cnt = 0;
-      while (mySerial.available()) {
-        char c = mySerial.read();
-        client.write(c);
-        cnt ++;
-        delay(7);
-      }
-      if(cnt)  {
-        Serial.print("485: ");
-        Serial.println(cnt);      
-      } 
-  
-    }    
-    //client.stop();    
-    //Serial.println("\nclient.disconnected");
-  }   
-}
-*/ 
-
-
-void handleRootPath() {
-
-  
-  String message = "";
-  message += "<!DOCTYPE html>"; 
-  message += "<html>";
-  message += "<head>"; 
-  message += "<title>Hiking-DDS238</title>";
-  message += "<meta http-equiv='refresh' content='5'>";
-  //message += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
-  message += "</head>"; 
-  message += "<body>"; 
-  message += "<h1>Hello from Hiking-DDS238!</h1>";
-  message += "<div>";
-  message += "<table>";
-  char str[80];
-  sprintf(str, "<tr><td>U=%3.1fV</tr></td>", counter.getCounterU());        
-  message += str;
-  sprintf(str, "<tr><td>I=%3.1fA</tr></td>", counter.getCounterI());        
-  message += str;          
-  sprintf(str, "<tr><td>PF=%1.3f</tr></td>", counter.getCounterPF());        
-  message += str;          
-  sprintf(str, "<tr><td>P=%5.1fW</tr></td>", counter.getCounterP());        
-  message += str;
-  
-  message += "</table>";
-  message += "</div>";
-  message += "</body>"; 
-  message += "</html>";
-
-  webServer.send(200, "text/html", message);
-}
-
-void handleNotFound() {
-  
-  String message = "File Not Found\n\n";
-  message += "URI: ";
-  message += webServer.uri();
-  message += "\nMethod: ";
-  message += (webServer.method() == HTTP_GET) ? "GET" : "POST";
-  message += "\nArguments: ";
-  message += webServer.args();
-  message += "\n";
-  for (uint8_t i = 0; i < webServer.args(); i++) {
-    message += " " + webServer.argName(i) + ": " + webServer.arg(i) + "\n";
+void loop(){  
+  webSrv::handle(); 
+  hikingPolling();
+  if (WiFi.status()  != WL_CONNECTED) {
+    Serial.println("\nWiFi not connected, reboot.");
+  } 
+  if (!client.connected()) {
+    mqtt_reconnect();
   }
-  webServer.send(404, "text/plain", message);  
+  client.loop();
+
 }
 
 
 
+
+/******************************************************************************************/
 void hikingPolling(){  
   typedef enum {
     init, idle, wait_for_poll, wait_for_resp,     
   } state_t;
   static state_t state = init;
   static  unsigned long time;
-  //uint8_t txBuf[100], rxBuf[100];
-  //uint16_t txCount, rxCount;
+
   
   switch(state){
     default:
@@ -219,7 +105,7 @@ void hikingPolling(){
     break;
     case wait_for_poll: 
       if ((millis() - time) < 2000) break;
-      Serial.println("Ack");
+      Serial.println("Hiking: Acking...");
       digitalWrite (RS485_TX, HIGH);
       delay(5);
       counter.regReq(COUNTER_ID);
@@ -232,7 +118,7 @@ void hikingPolling(){
       Hiking_DDS238_2::reqStatus_t st = counter.getReqStatus();      
       if(st == Hiking_DDS238_2::stWait_for_resp) break;
       if (st == Hiking_DDS238_2::stDone){
-         Serial.println("\nin:");
+         Serial.println("\nResult:");
         for(uint8_t i = 0; i < counter.getRxLength(); i ++) {    
           //Serial.print(counter.getRxBuff()[i], HEX); 
         }
@@ -249,28 +135,72 @@ void hikingPolling(){
         sprintf(str, "P=%5.1f", counter.getCounterP());        
         Serial.println(str);
         
-     
+        client.publish("esp/hiking/power", str);
+
         state = init;     
       } else if (st == Hiking_DDS238_2::stTimeout){
-        Serial.println("timeout"); 
+        Serial.println("Hiking: timeout"); 
+        client.publish("esp/hiking/power", "timeout");
         state = init;
         break;            
       }else if (st == Hiking_DDS238_2::stErrCs){
-        Serial.println("crc error"); 
+        Serial.println("Hiking: crc error"); 
+        client.publish("esp/hiking/power", "crc error");
         state = init;
         break;            
       } else {
-        Serial.println("some error"); 
+        Serial.println("Hiking: some error"); 
+        client.publish("esp/hiking/power", "error");
         state = init;
         break; 
       }
            
     break;    
   }
-
-  
-
 }
 
+/******************************************************************************************/
+void mqtt_reconnect() {
+  // Loop until we're reconnected
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    // Create a random client ID
+    String clientId = "ESP8266Client-";
+    clientId += String(random(0xffff), HEX);
+    // Attempt to connect
+    if (client.connect("arduinoClient", "vlad", "vv")) {
+      Serial.println("mqtt connected");
+      // Once connected, publish an announcement...
+      //client.publish("outTopic", "hello world");
+      // ... and resubscribe
+      client.subscribe("inTopic");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
+}
 
+void mqtt_callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Message arrived [");
+  Serial.print(topic);
+  Serial.print("] ");
+  for (unsigned int i = 0; i < length; i++) {
+    Serial.print((char)payload[i]);
+  }
+  Serial.println();
+  /*
+  // Switch on the LED if an 1 was received as first character
+  if ((char)payload[0] == '1') {
+    digitalWrite(BUILTIN_LED, LOW);   // Turn the LED on (Note that LOW is the voltage level
+    // but actually the LED is on; this is because
+    // it is active low on the ESP-01)
+  } else {
+    digitalWrite(BUILTIN_LED, HIGH);  // Turn the LED off by making the voltage HIGH
+  }
+  */
 
+}
