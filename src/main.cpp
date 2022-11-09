@@ -21,7 +21,7 @@ SoftwareSerial mySerial;
  
 const char* ssid = "Keenetic-2568";
 const char* password = "T9TW8iHR"; 
-const char* adr_mqtt_server = "192.168.1.90";
+const char* adr_mqtt_server = "192.168.1.105";
 
 
 

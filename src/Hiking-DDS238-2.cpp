@@ -106,7 +106,7 @@ Hiking_DDS238_2::results_t Hiking_DDS238_2::getResults(){
   res.pf = getCounterPF();
   res.f = getCounterF();
   res.totalCnt = getCounterTotal();
-  res.status = statusOk;
+  res.status = m_currStatus;
   return res;
 }
 
