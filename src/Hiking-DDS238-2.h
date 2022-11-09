@@ -9,22 +9,24 @@
 
 class Hiking_DDS238_2{
 public:
-  typedef enum
-  {
-    statusOk,
-    statusErr,
-  } cntStatus_t;
 
-  typedef struct
-  {
+  typedef struct  {
     double u;
     double i;
     double p;
     double pf;
     double f;
-    uint32_t totalCnt;
-    cntStatus_t status;
+    uint32_t totalCnt;    
   } results_t;
+
+  typedef enum  {
+    stReady,
+    stWait_for_resp,
+    stDone,
+    stTimeout,
+    stErrCs,
+    stErr,
+  } reqStatus_t;
 
 private:
   Stream *m_uart;
@@ -38,21 +40,10 @@ private:
   uint8_t mb_crc_check(uint8_t *, uint8_t);
   int16_t getRegVal(int16_t regNum);
   int32_t getRegVal32(int16_t regNum);
-
-  cntStatus_t m_currStatus;
+  
 
 public:
-  typedef enum  {
-    stReady,
-    stWait_for_resp,
-    stDone,
-    stTimeout,
-    stErrCs,
-    stErr,
-  } reqStatus_t;
-
-
-  Hiking_DDS238_2(Stream *uart, unsigned long timeout) : m_uart(uart), m_timeout(timeout), m_rxCount(0), m_currStatus(statusErr){};
+  Hiking_DDS238_2(Stream *uart, unsigned long timeout) : m_uart(uart), m_timeout(timeout), m_rxCount(0){};
   uint16_t regReq(uint8_t id){return regReq(id, REG_ADR_BEGIN, REQ_REG_COUNT);};
   reqStatus_t getReqStatus();
   uint8_t *getRxBuff(){return m_rxBuff;};
@@ -65,5 +56,6 @@ public:
   double  getCounterF(); 
   uint32_t getCounterTotal(); 
   results_t getResults();
-  void polling();
+  char *getResultsJsonStr();
+  
 };

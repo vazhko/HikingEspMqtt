@@ -34,6 +34,7 @@ namespace webSrv {
     message += "<h1>Hello from Hiking-DDS238!</h1>";
     message += "<div>";
     message += "<table>";
+/*
     char str[80];
     if (counter.getResults().status == Hiking_DDS238_2::statusOk){
       sprintf(str, "<tr><td>U=%3.1fV</tr></td>", counter.getCounterU());        
@@ -47,6 +48,7 @@ namespace webSrv {
     } else {
       message += "<tr><td>RS845: No response</tr></td>";
     }
+*/
     
     message += "</table>";
     message += "</div>";
