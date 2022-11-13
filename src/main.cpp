@@ -27,7 +27,7 @@ void hikingPolling();
 void mqtt_reconnect();
 void mqtt_callback(char* topic, byte* payload, unsigned int length);
 
-void counter_callback(char* res, Counter::err_t err);
+void counter_callback(Hiking_DDS238_2::results_t);
 Counter counter(&mySerial, RS485_TX, counter_callback);
 
 /******************************************************************************************/
@@ -70,25 +70,46 @@ void loop() {
 }
 
 /******************************************************************************************/
-void counter_callback(char* res, Counter::err_t err) {
-  if (err != Counter::errOk) {
-    //Serial.println("Hiking: err");
-    switch (err) {
-    case Counter::errTimeout:
-      Serial.println("Hiking: errTimeout");
-      break;
-    case Counter::errCs:
-      Serial.println("Hiking: errCs");
-      break;
-    case Counter::errUnk:
-      Serial.println("Hiking: errUnk");
-      break;
-    }
-    return;
+void counter_callback(Hiking_DDS238_2::results_t res) {
+
+  const char* mqttStrFormat = "{ \
+  \"voltage\":\"%3.1f\", \
+  \"current\": \"%3.1f\", \
+  \"power\":\"%5.1f\", \
+  \"pf\":\"%1.3f\", \
+  \"f\":\"%2.2f\", \
+  \"total\":\"%d\", \
+  \"status\":\"%d\" \
+  }";
+
+  char mqttStr[500];
+
+
+  switch (res.err) {
+  case Hiking_DDS238_2::errTimeout:
+    Serial.println("Hiking: errTimeout");
+    break;
+  case Hiking_DDS238_2::errCs:
+    Serial.println("Hiking: errCs");
+    break;
+  case Hiking_DDS238_2::errUnk:
+    Serial.println("Hiking: errUnk");
+    break;
+  case Hiking_DDS238_2::errOk:
+
+    sprintf(mqttStr, mqttStrFormat, res.u, res.i, res.p, res.pf, res.f, res.totalCnt, res.err);
+    mqttClient.publish(mqtt_payload, mqttStr);
+
+    Serial.println("Hiking: ");
+    Serial.println(mqttStr);  
+
+    break;
   }
-  Serial.print("Hiking: ");
-  Serial.println(res);
-  mqttClient.publish(mqtt_payload, res);
+
+  webSrv::setInfo(res);
+
+
+
 }
 
 /******************************************************************************************/

@@ -44,21 +44,21 @@ void Counter::polling() {
       //for(uint8_t i = 0; i < m_counter->getRxLength(); i ++) {    
         //Serial.print(counter.getRxBuff()[i], HEX); 
       //}        
-      if (m_clb) m_clb(getResultsJsonStr((char *)"errOk"), errOk);
+      if (m_clb) m_clb(m_counter->getResults());
       state = init_st;
     }
     else if (st == Hiking_DDS238_2::stTimeout) {
-      if (m_clb) m_clb(getResultsJsonStr((char *)"errTimeout"), errTimeout);
+      if (m_clb) m_clb(m_counter->getResults());
       state = init_st;
       break;
     }
     else if (st == Hiking_DDS238_2::stErrCs) {
-      if (m_clb) m_clb(getResultsJsonStr((char *)"errCs"), errCs);
+      if (m_clb) m_clb(m_counter->getResults());
       state = init_st;
       break;
     }
     else if (st == Hiking_DDS238_2::stErr) {
-      if (m_clb) m_clb(getResultsJsonStr((char *)"errUnk"), errUnk);
+      if (m_clb) m_clb(m_counter->getResults());
       state = init_st;
       break;
     }
@@ -69,23 +69,5 @@ void Counter::polling() {
 
     break;
   }
-}
-
-/******************************************************************************************/
-char* Counter::getResultsJsonStr(char* errStr) {
-  const char* mqttStrFormat = "{ \
-  \"voltage\":\"%3.1f\", \
-  \"current\": \"%3.1f\", \
-  \"power\":\"%5.1f\", \
-  \"pf\":\"%1.3f\", \
-  \"f\":\"%2.2f\", \
-  \"total\":\"%d\", \
-  \"status\":\"%s\" \
-  }";
-  static char mqttStr[500];
-
-  Hiking_DDS238_2::results_t res = m_counter->getResults();
-  sprintf(mqttStr, mqttStrFormat, res.u, res.i, res.p, res.pf, res.f, res.totalCnt, errStr);
-  return mqttStr;
 }
 

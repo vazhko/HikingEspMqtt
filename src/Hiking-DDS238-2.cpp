@@ -47,6 +47,10 @@ uint16_t Hiking_DDS238_2::regReq(uint8_t id, uint16_t adr, uint16_t count){
   m_uart->write(txBuff, 8);
   m_time = millis();
   m_rxCount = count*2 + 5;
+
+  memset(&m_results, 0, sizeof(m_results));
+  m_results.err = errTimeout;
+
   return m_rxCount;
 }
 
@@ -56,15 +60,18 @@ Hiking_DDS238_2::reqStatus_t Hiking_DDS238_2::getReqStatus(){
   if((millis() - m_time) > m_timeout) return stTimeout;
   if(m_rxCount > m_uart->available()) return stWait_for_resp;
   if(m_rxCount < m_uart->available()) {
-    m_uart->flush();   
+    m_uart->flush(); 
+    m_results.err = errUnk;  
     return reqStatus_t::stErr;
   }    
   if(m_rxCount == m_uart->available()){
     m_uart->read(m_rxBuff, m_rxCount); 
     if (!mb_crc_check(m_rxBuff, m_rxCount)){
+      m_results.err = errCs;
       return stErrCs;
     }         
-  }
+  }  
+  extractResults();
   return stDone;
 }
 
@@ -97,15 +104,14 @@ uint32_t Hiking_DDS238_2::getCounterTotal(){
 }
 
 /******************************************************************************************/
-Hiking_DDS238_2::results_t Hiking_DDS238_2::getResults(){
-  results_t res;
-  res.u = getCounterU();
-  res.i = getCounterI();
-  res.p = getCounterP();
-  res.pf = getCounterPF();
-  res.f = getCounterF();
-  res.totalCnt = getCounterTotal();  
-  return res;
+void Hiking_DDS238_2::extractResults(){  
+  m_results.err = errOk;
+  m_results.u = getCounterU();
+  m_results.i = getCounterI();
+  m_results.p = getCounterP();
+  m_results.pf = getCounterPF();
+  m_results.f = getCounterF();
+  m_results.totalCnt = getCounterTotal();   
 }
 
 
