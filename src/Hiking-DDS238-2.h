@@ -6,20 +6,18 @@
 #define REG_ADR_BEGIN 0
 #define RESP_LENGTH REQ_REG_COUNT * 2 + 5
 
-
-class Hiking_DDS238_2{
-public:
-
-  typedef struct  {
+class Hiking_DDS238_2 {
+ public:
+  typedef struct {
     double u;
     double i;
     double p;
     double pf;
     double f;
-    uint32_t totalCnt;    
+    uint32_t totalCnt;
   } results_t;
 
-  typedef enum  {
+  typedef enum {
     stReady,
     stWait_for_resp,
     stDone,
@@ -28,7 +26,7 @@ public:
     stErr,
   } reqStatus_t;
 
-private:
+ private:
   Stream *m_uart;
   unsigned long m_timeout;
   unsigned long m_time;
@@ -40,22 +38,23 @@ private:
   uint8_t mb_crc_check(uint8_t *, uint8_t);
   int16_t getRegVal(int16_t regNum);
   int32_t getRegVal32(int16_t regNum);
-  
 
-public:
-  Hiking_DDS238_2(Stream *uart, unsigned long timeout) : m_uart(uart), m_timeout(timeout), m_rxCount(0){};
-  uint16_t regReq(uint8_t id){return regReq(id, REG_ADR_BEGIN, REQ_REG_COUNT);};
+ public:
+  Hiking_DDS238_2(Stream *uart, unsigned long timeout)
+      : m_uart(uart), m_timeout(timeout), m_rxCount(0){};
+  uint16_t regReq(uint8_t id) {
+    return regReq(id, REG_ADR_BEGIN, REQ_REG_COUNT);
+  };
   reqStatus_t getReqStatus();
-  uint8_t *getRxBuff(){return m_rxBuff;};
-  uint16_t getRxLength(){return RESP_LENGTH;};  
+  uint8_t *getRxBuff() { return m_rxBuff; };
+  uint16_t getRxLength() { return RESP_LENGTH; };
 
-  double  getCounterU();
-  double  getCounterI();
-  double  getCounterP();
-  double  getCounterPF(); 
-  double  getCounterF(); 
-  uint32_t getCounterTotal(); 
+  double getCounterU();
+  double getCounterI();
+  double getCounterP();
+  double getCounterPF();
+  double getCounterF();
+  uint32_t getCounterTotal();
   results_t getResults();
   char *getResultsJsonStr();
-  
 };
