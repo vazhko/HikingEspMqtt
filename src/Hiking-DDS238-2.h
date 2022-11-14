@@ -14,7 +14,7 @@ public:
     errCs,
     errUnk,
   } err_t;
-  
+
   typedef struct {
     double u;
     double i;
@@ -23,6 +23,8 @@ public:
     double f;
     uint32_t totalCnt;
     err_t err;
+    unsigned long errCnt;
+    unsigned long noErrCnt;
   } results_t;
 
   typedef enum {
@@ -51,7 +53,9 @@ private:
 
 public:
   Hiking_DDS238_2(Stream* uart, unsigned long timeout)
-    : m_uart(uart), m_timeout(timeout), m_rxCount(0) {};
+    : m_uart(uart), m_timeout(timeout), m_rxCount(0) {
+    memset(&m_results, 0, sizeof(m_results));
+  };
   uint16_t regReq(uint8_t id) {
     return regReq(id, REG_ADR_BEGIN, REQ_REG_COUNT);
   };

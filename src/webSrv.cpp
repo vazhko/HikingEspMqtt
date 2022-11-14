@@ -27,8 +27,9 @@ namespace webSrv {
     message += "<!DOCTYPE html>";
     message += "<html>";
     message += "<head>";
+    message += "<style>table, th, td { border: 1px solid black; border-collapse: collapse;}th, td { padding: 15px;}</style>";
     message += "<title>Hiking-DDS238</title>";
-    message += "<meta http-equiv='refresh' content='5'>";
+    message += "<meta http-equiv='refresh' content='5'>"; // авто перезавантаження через 5 сек
     //message += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
     message += "</head>";
     message += "<body>";
@@ -36,22 +37,27 @@ namespace webSrv {
     message += "<div>";
     message += "<table>";
 
-    char str[80];
+    char str[200];
     if (m_res.err == Hiking_DDS238_2::errOk) {
-      sprintf(str, "<tr><td>U=%3.1fV</tr></td>", m_res.u);
+      sprintf(str, "<tr><td>U</td><td>%3.1fV</td></tr>", m_res.u);
       message += str;
-      sprintf(str, "<tr><td>I=%3.1fA</tr></td>", m_res.i);
+      sprintf(str, "<tr><td>I</td><td>%3.1fA</td></tr>", m_res.i);
       message += str;
-      sprintf(str, "<tr><td>PF=%1.3f</tr></td>", m_res.pf);
+      sprintf(str, "<tr><td>PF</td><td>%1.3f</td></tr>", m_res.pf);
       message += str;
-      sprintf(str, "<tr><td>P=%5.1fW</tr></td>", m_res.p);
+      sprintf(str, "<tr><td>P</td><td>%5.1fW</td></tr>", m_res.p);
+      message += str;
+      sprintf(str, "<tr><td>NoErr/Errors count</td><td>%ld/%ld(%3.1f%%)</td></tr>",
+        m_res.noErrCnt, m_res.errCnt, (double)m_res.errCnt * 100.0 / (double)m_res.noErrCnt);
       message += str;
     }
     else {
-      sprintf(str, "<tr><td>Error=%dV</tr></td>", m_res.err);
+      sprintf(str, "<tr><td>Error</td><td>%d</td></tr>", m_res.err);
+      message += str;
+      sprintf(str, "<tr><td>NoErr/Err</td><td>%ld/%ld(%3.1f%%)</td></tr>",
+        m_res.noErrCnt, m_res.errCnt, (double)m_res.errCnt * 100.0 / (double)m_res.noErrCnt);
       message += str;
     }
-
 
     message += "</table>";
     message += "</div>";

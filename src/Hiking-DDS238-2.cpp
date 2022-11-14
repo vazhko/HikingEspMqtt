@@ -48,7 +48,7 @@ uint16_t Hiking_DDS238_2::regReq(uint8_t id, uint16_t adr, uint16_t count){
   m_time = millis();
   m_rxCount = count*2 + 5;
 
-  memset(&m_results, 0, sizeof(m_results));
+  //memset(&m_results, 0, sizeof(m_results));
   m_results.err = errTimeout;
 
   return m_rxCount;
@@ -57,20 +57,26 @@ uint16_t Hiking_DDS238_2::regReq(uint8_t id, uint16_t adr, uint16_t count){
 /******************************************************************************************/
 Hiking_DDS238_2::reqStatus_t Hiking_DDS238_2::getReqStatus(){
   if (m_time == 0) return reqStatus_t::stReady;
-  if((millis() - m_time) > m_timeout) return stTimeout;
+  if((millis() - m_time) > m_timeout) {    
+    m_results.errCnt ++;
+    return stTimeout;
+  }
   if(m_rxCount > m_uart->available()) return stWait_for_resp;
   if(m_rxCount < m_uart->available()) {
     m_uart->flush(); 
-    m_results.err = errUnk;  
+    m_results.err = errUnk;    
+    m_results.errCnt++; 
     return reqStatus_t::stErr;
   }    
   if(m_rxCount == m_uart->available()){
     m_uart->read(m_rxBuff, m_rxCount); 
     if (!mb_crc_check(m_rxBuff, m_rxCount)){
       m_results.err = errCs;
+      
+      m_results.errCnt++;
       return stErrCs;
     }         
-  }  
+  }    
   extractResults();
   return stDone;
 }
@@ -106,6 +112,7 @@ uint32_t Hiking_DDS238_2::getCounterTotal(){
 /******************************************************************************************/
 void Hiking_DDS238_2::extractResults(){  
   m_results.err = errOk;
+  m_results.noErrCnt ++;
   m_results.u = getCounterU();
   m_results.i = getCounterI();
   m_results.p = getCounterP();
