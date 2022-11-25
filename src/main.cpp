@@ -3,26 +3,28 @@
 #include <WiFiUdp.h>
 #include <ESP8266WiFi.h>
 #include <SoftwareSerial.h>
-#include <Preferences.h>
+#include <PubSubClient.h>
 
 //#include <ESP8266WebServer.h>
 //#include <ESP8266mDNS.h>
 #include "Counter.h"
 #include "webSrv.h"
-#include <PubSubClient.h>
+#include "Settings.h"
+
 
 #define MYPORT_TX D6
 #define MYPORT_RX D5
 #define RS485_TX D7
-SoftwareSerial mySerial;
 
-const char* ssidDef = "Keenetic-2568";
-const char* passwordDef = "T9TW8iHR";
-const char* mqttSrvAdrDef = "192.168.1.105";
-const char* mqttChannelDef = "esp/hiking/all";
+#define LED D2
+
+SoftwareSerial mySerial;
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
+
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP);
 
 void hikingPolling();
 void mqtt_reconnect();
@@ -31,39 +33,17 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length);
 void counter_callback(Hiking_DDS238_2::results_t);
 Counter counter(&mySerial, RS485_TX, counter_callback);
 
-Preferences prefs;
+Settings settings;
 
-typedef struct {
-  char ssid[128];
-  char password[128];
-  char mqttSrvAdr[128];
-  char mqttChannel[128];
-  uint16_t pollTime;
-} pref_t;
-
-pref_t settings;
 /******************************************************************************************/
 void setup() {
 
   Serial.begin(115200);
   Serial.print("\n\nStart...");
-
-  prefs.begin("my-app"); // use "my-app" namespace
-
-  if (!prefs.isKey("settings")) {
-    strcpy(settings.ssid, ssidDef);
-    strcpy(settings.password, passwordDef);
-    strcpy(settings.mqttSrvAdr, mqttSrvAdrDef);
-    strcpy(settings.mqttChannel, mqttChannelDef);    
-    prefs.putBytes("settings", &settings, sizeof(settings));
-    Serial.print("\nCreate \"my-app\" namespace\n");
-  }
-  prefs.getBytes("settings", &settings, sizeof(settings));
-
-
+ 
   Serial.print("Connecting to ");
-  Serial.println(settings.ssid);
-  WiFi.begin(settings.ssid, settings.password);
+  Serial.println(settings.getSettings().ssid);
+  WiFi.begin(settings.getSettings().ssid, settings.getSettings().password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
@@ -78,8 +58,13 @@ void setup() {
 
   webSrv::init();
 
-  mqttClient.setServer(settings.mqttSrvAdr, 1883);
+  mqttClient.setServer(settings.getSettings().mqttSrvAdr, 1883);
   mqttClient.setCallback(mqtt_callback);
+
+  pinMode(LED, OUTPUT);
+  digitalWrite(LED, LOW);
+
+  timeClient.begin();
 }
 
 /******************************************************************************************/
@@ -89,11 +74,20 @@ void loop() {
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("\nWiFi not connected, reboot.");
     ESP.restart();
+  } else {
+    timeClient.update();    
   }
-  if (!mqttClient.connected()) {
-    mqtt_reconnect();
-  }
+
+
+  if (mqttClient.connected()) {
+    digitalWrite(LED, HIGH);
+  } else {
+    digitalWrite(LED, LOW);
+    mqtt_reconnect();   
+  }  
+
   mqttClient.loop();
+  
 }
 
 /******************************************************************************************/
@@ -125,10 +119,12 @@ void counter_callback(Hiking_DDS238_2::results_t res) {
   case Hiking_DDS238_2::errOk:
 
     sprintf(mqttStr, mqttStrFormat, res.u, res.i, res.p, res.pf, res.f, res.totalCnt, res.err);
-    mqttClient.publish(settings.mqttChannel, mqttStr);
+    mqttClient.publish(settings.getSettings().mqttChannel, mqttStr);
 
     Serial.println("Hiking: ");
     Serial.println(mqttStr);  
+
+    settings.checkData(res.u, res.i);
 
     break;
   }
