@@ -2,7 +2,7 @@
 #include "Arduino.h"
 
 const char* ssidDef = "Keenetic-2568";
-const char* passwordDef = "6xDWi7@q123";
+const char* passwordDef = "6xDWi7@q";
 const char* mqttSrvAdrDef = "192.168.1.105";
 const char* mqttChannelDef = "esp/hiking/all";
 const char* mqttUser = "root";

@@ -52,7 +52,7 @@ void setup() {
     delay(500);
     WiFi.mode(WIFI_AP);
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-    WiFi.softAP("esp_haking", "31415926");
+    WiFi.softAP("esp_haking", "12345678");
     // Serial.println("AP \"esp_haking (vv)\" has began");
 
     Serial.println(WiFi.softAPSSID());

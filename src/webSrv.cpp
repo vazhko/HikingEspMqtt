@@ -16,12 +16,17 @@ ESP8266WebServer webServer(80);
 Hiking_DDS238_2::results_t m_res;
 
 unsigned long startTime = 0;
+unsigned long rebootTime = 0;
 
 void init() {
   webServer.on("/", handleRootPath);
   webServer.on("/SaveParam", handleSaveParam);
   webServer.onNotFound([]() { webServer.send(404, "text / plain", "Page Not Found\n\n"); });
   webServer.begin();
+}
+
+void reboot() {
+  rebootTime = 1000;
 }
 
 void handle() {
@@ -31,6 +36,14 @@ void handle() {
     first = false;
   }
   webServer.handleClient();
+
+  if (rebootTime) {
+    rebootTime --;
+    if (!rebootTime) {
+      Serial.print("\nRestart");
+      ESP.restart();
+    }
+  }
 }
 
 void handleRootPath() {
@@ -149,12 +162,12 @@ void handleSaveParam() {
   String message = "";
 
   if (webServer.argName(0) == "SSID") {
-     sprintf(settings.getSettings().ssid, webServer.arg(0).c_str());
-     settings.syncSettings();
+    sprintf(settings.getSettings().ssid, webServer.arg(0).c_str());
+    settings.syncSettings();
   }
   if (webServer.argName(0) == "Password") {
-     sprintf(settings.getSettings().password, webServer.arg(0).c_str());
-     settings.syncSettings();
+    sprintf(settings.getSettings().password, webServer.arg(0).c_str());
+    settings.syncSettings();
   }
   if (webServer.argName(0) == "MQTT server") {
     // sprintf(settings.getSettings().mqttSrvAdr, webServer.arg(0).c_str());
@@ -171,13 +184,12 @@ void handleSaveParam() {
     settings.resetDataI();
   }
   if (webServer.argName(0) == "Reboot") {
-    Serial.print("\nRestart");
-    if(digitalRead(D1)){
+    if (digitalRead(D1)) {
       Serial.print(" .Pin D1 is 1");
     } else {
       Serial.print(" .Pin D1 is 0");
     }
-    ESP.restart();
+    reboot();
   }
   webServer.sendHeader("Location", "/");  // Add a header to respond with a new location for the browser to go to the home page again
   webServer.send(303);
