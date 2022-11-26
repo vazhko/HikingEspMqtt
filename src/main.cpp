@@ -31,7 +31,7 @@ WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
-ESP8266WiFiMulti wifiMulti;
+
 
 Counter counter(&mySerial, RS485_TX, counter_callback);
 Settings settings;
@@ -77,15 +77,15 @@ void setup() {
 
   mySerial.begin(9600, SWSERIAL_8N1, MYPORT_RX, MYPORT_TX, false);
 
+  timeClient.begin();
+
   webSrv::init();
 
   mqttClient.setServer(settings.getSettings().mqttSrvAdr, 1883);
   mqttClient.setCallback(mqtt_callback);
 
   pinMode(LED, OUTPUT);
-  digitalWrite(LED, LOW);
-
-  timeClient.begin();
+  digitalWrite(LED, LOW);  
 }
 
 /******************************************************************************************/

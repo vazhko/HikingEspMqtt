@@ -1,12 +1,14 @@
 #include "Arduino.h"
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#include <NTPClient.h>
 
 #include "Hiking-DDS238-2.h"
 #include "Settings.h"
 
 extern Hiking_DDS238_2 counter;
 extern Settings settings;
+extern NTPClient timeClient;
 
 namespace webSrv {
 
@@ -17,7 +19,10 @@ Hiking_DDS238_2::results_t m_res;
 
 unsigned long startTime = 0;
 unsigned long rebootTime = 0;
+//char firstStartTimeStr[60];
+String firstStartTime;
 
+/******************************************************************************************/
 void init() {
   webServer.on("/", handleRootPath);
   webServer.on("/SaveParam", handleSaveParam);
@@ -25,20 +30,25 @@ void init() {
   webServer.begin();
 }
 
+/******************************************************************************************/
 void reboot() {
-  rebootTime = 1000;
+  rebootTime = 3000;
 }
 
+/******************************************************************************************/
 void handle() {
   static bool first = true;
+
   if (first) {
     startTime = millis();
     first = false;
+    timeClient.update();
+    firstStartTime = timeClient.getFormattedTime();    
   }
   webServer.handleClient();
 
   if (rebootTime) {
-    rebootTime --;
+    rebootTime--;
     if (!rebootTime) {
       Serial.print("\nRestart");
       ESP.restart();
@@ -46,6 +56,7 @@ void handle() {
   }
 }
 
+/******************************************************************************************/
 void handleRootPath() {
   String message = "";
   char str[1000];
@@ -67,22 +78,22 @@ void handleRootPath() {
   message += "</head>";
   message += "<body>";
   message += "<div style=\"width:800px; margin:0 auto;\">";
-
+ 
   message += "<h3>Hiking-DDS238-2</h3>";
-
-  // message += "<br>";
+  message += firstStartTime;
+  message += "<br>";
 
   // Settings
   message += "<table>";
   message += "<caption><h4>Parameters</h4></caption>";
 
   sprintf(str,
-          "<tr><td style=\"width: 50%%;\">SSID</td>"
+          "<tr><td style=\"width: 50%%;\">WiFi SSID</td>"
           "<td><form action=\"/SaveParam\" method=\"get\"><input value=\"%s\" name=\"SSID\"><button type=\"submit\">Save</button></form></td></tr>",
           settings.getSettings().ssid);
   message += str;
   sprintf(str,
-          "<tr><td>Password</td>"
+          "<tr><td>WiFi Password</td>"
           "<td><form action=\"/SaveParam\" method=\"get\"><input value=\"%s\" name=\"Password\"><button type=\"submit\">Save</button></form></td></tr>",
           settings.getSettings().password);
   message += str;
@@ -95,6 +106,16 @@ void handleRootPath() {
           "<tr><td>MQTT channell</td>"
           "<td><form action=\"/SaveParam\" method=\"get\"><input value=\"%s\" name=\"MQTT channell\"><button type=\"submit\">Save</button></form></td></tr>",
           settings.getSettings().mqttChannel);
+  message += str;
+  sprintf(str,
+          "<tr><td>MQTT user</td>"
+          "<td><form action=\"/SaveParam\" method=\"get\"><input value=\"%s\" name=\"MQTT user\"><button type=\"submit\">Save</button></form></td></tr>",
+          settings.getSettings().mqttUser);
+  message += str;
+  sprintf(str,
+          "<tr><td>MQTT password</td>"
+          "<td><form action=\"/SaveParam\" method=\"get\"><input value=\"%s\" name=\"MQTT password\"><button type=\"submit\">Save</button></form></td></tr>",
+          settings.getSettings().mqttPassword);
   message += str;
 
   message += "</table>";
@@ -129,17 +150,17 @@ void handleRootPath() {
 
   sprintf(str,
           "<tr><td style=\"width: 50%%;\">U max</td>"
-          "<td><form action=\"/SaveParam\" method=\"get\"><input value=\"%3.1fV\" name=\"U max\"><button type=\"submit\">Reset</button></form></td></tr>",
+          "<td><form action=\"/SaveParam\" method=\"get\"><input value=\"%3.1fV\" name=\"U max\"><button type=\"submit\">Reset  </button></form></td></tr>",
           settings.getData().voltageMax.val);
   message += str;
   sprintf(str,
           "<tr><td>I max</td>"
-          "<td><form action=\"/SaveParam\" method=\"get\"><input value=\"%3.1fA\" name=\"I max\"><button type=\"submit\">Reset</button></form></td></tr>",
+          "<td><form action=\"/SaveParam\" method=\"get\"><input value=\"%3.1fA\" name=\"I max\"><button type=\"submit\">Reset  </button></form></td></tr>",
           settings.getData().currentMax.val);
   message += str;
   sprintf(str,
           "<tr><td>Working time, s</td>"
-          "<td><form action=\"/SaveParam\" method=\"get\"><input value=\"%lu\" name=\"Reboot\"><button type=\"submit\">Reboot</button></form></td></tr>",
+          "<td><form action=\"/SaveParam\" method=\"get\"><input value=\"%lus\" name=\"Reboot\"><button type=\"submit\">Reboot</button></form></td></tr>",
           (millis() - startTime) / 1000);
   message += str;
 
@@ -153,10 +174,12 @@ void handleRootPath() {
   webServer.send(200, "text/html", message);
 }
 
+/******************************************************************************************/
 void setInfo(Hiking_DDS238_2::results_t& res) {
   m_res = res;
 }
 
+/******************************************************************************************/
 void handleSaveParam() {
   Serial.print("Save");
   String message = "";
@@ -170,12 +193,20 @@ void handleSaveParam() {
     settings.syncSettings();
   }
   if (webServer.argName(0) == "MQTT server") {
-    // sprintf(settings.getSettings().mqttSrvAdr, webServer.arg(0).c_str());
-    // settings.syncSettings();
+    sprintf(settings.getSettings().mqttSrvAdr, webServer.arg(0).c_str());
+    settings.syncSettings();
   }
   if (webServer.argName(0) == "MQTT channell") {
-    // sprintf(settings.getSettings().mqttChannel, webServer.arg(0).c_str());
-    // settings.syncSettings();
+    sprintf(settings.getSettings().mqttChannel, webServer.arg(0).c_str());
+    settings.syncSettings();
+  }
+  if (webServer.argName(0) == "MQTT user") {
+    sprintf(settings.getSettings().mqttUser, webServer.arg(0).c_str());
+    settings.syncSettings();
+  }
+  if (webServer.argName(0) == "MQTT password") {
+    sprintf(settings.getSettings().mqttPassword, webServer.arg(0).c_str());
+    settings.syncSettings();
   }
   if (webServer.argName(0) == "U max") {
     settings.resetDataU();
