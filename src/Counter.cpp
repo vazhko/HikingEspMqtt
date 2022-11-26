@@ -5,7 +5,7 @@
 /******************************************************************************************/
 Counter::Counter(Stream* uartRS485, uint8_t txPin, myfunc clb) : m_clb(clb) {
   m_uartRS485 = uartRS485;
-  m_counter = new Hiking_DDS238_2(m_uartRS485, 1000);
+  m_counter = new Hiking_DDS238_2(m_uartRS485, 3000);
   m_txPin = txPin;
 }
 
