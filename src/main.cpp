@@ -1,11 +1,13 @@
 #include "Arduino.h"
-#include <NTPClient.h>
+//#include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <ESP8266WiFi.h>
 #include <SoftwareSerial.h>
 
+
 //#include <ESP8266WebServer.h>
 //#include <ESP8266mDNS.h>
+#include "dateTime.h"
 #include "Counter.h"
 #include "webSrv.h"
 #include "Settings.h"
@@ -21,8 +23,8 @@ void counter_callback(Hiking_DDS238_2::results_t);
 
 SoftwareSerial mySerial;
 
-WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP);
+//WiFiUDP ntpUDP;
+//NTPClient timeClient(ntpUDP);
 
 Counter counter(&mySerial, RS485_TX, counter_callback);
 Settings settings;
@@ -68,10 +70,13 @@ void setup() {
 
   mySerial.begin(9600, SWSERIAL_8N1, MYPORT_RX, MYPORT_TX, false);
 
-  timeClient.begin();
+  ///timeClient.begin();
 
   webSrv::init();
   mqttClient::init();
+  dateTime::init();
+
+
 }
 
 /******************************************************************************************/
@@ -82,10 +87,11 @@ void loop() {
     Serial.println("\nWiFi not connected, reboot.");
     ESP.restart();
   } else {
-    timeClient.update();
+    ///timeClient.update();
   }
 
   mqttClient::handle();
+  dateTime::handle();
 }
 
 /******************************************************************************************/

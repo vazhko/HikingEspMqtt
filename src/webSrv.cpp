@@ -1,14 +1,15 @@
 #include "Arduino.h"
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
-#include <NTPClient.h>
+//#include <NTPClient.h>
+//#include <ezTime.h>
 
 #include "Hiking-DDS238-2.h"
 #include "Settings.h"
 
 extern Hiking_DDS238_2 counter;
 extern Settings settings;
-extern NTPClient timeClient;
+//extern NTPClient timeClient;
 
 namespace webSrv {
 
@@ -19,7 +20,7 @@ Hiking_DDS238_2::results_t m_res;
 
 unsigned long startTime = 0;
 unsigned long rebootTime = 0;
-//char firstStartTimeStr[60];
+// char firstStartTimeStr[60];
 String firstStartTime;
 
 /******************************************************************************************/
@@ -38,13 +39,18 @@ void reboot() {
 /******************************************************************************************/
 void handle() {
   static bool first = true;
-
+/*
   if (first) {
     startTime = millis();
-    first = false;
-    timeClient.update();
-    firstStartTime = timeClient.getFormattedTime();    
+
+    if (!timeClient.update()) {
+      firstStartTime = timeClient.getFormattedTime();
+      
+      // sprintf(buf1, "%02d:%02d:%02d %02d/%02d/%02d",  now.hour(), now.minute(), now.second(), now.date(), now.month(), now.year());
+    }
+
   }
+*/
   webServer.handleClient();
 
   if (rebootTime) {
@@ -78,7 +84,7 @@ void handleRootPath() {
   message += "</head>";
   message += "<body>";
   message += "<div style=\"width:800px; margin:0 auto;\">";
- 
+
   message += "<h3>Hiking-DDS238-2</h3>";
   message += firstStartTime;
   message += "<br>";
@@ -94,7 +100,7 @@ void handleRootPath() {
   message += str;
   sprintf(str,
           "<tr><td>WiFi Password</td>"
-          "<td><form action=\"/SaveParam\" method=\"get\"><input value=\"%s\" name=\"Password\"><button type=\"submit\">Save</button></form></td></tr>",
+          "<td><form action=\"/SaveParam\" method=\"get\"><input value=\"%s\" name=\"Password\" type=\"password\"><button type=\"submit\">Save</button></form></td></tr>",
           settings.getSettings().password);
   message += str;
   sprintf(str,
@@ -160,7 +166,7 @@ void handleRootPath() {
   message += str;
   sprintf(str,
           "<tr><td>Working time, s</td>"
-          "<td><form action=\"/SaveParam\" method=\"get\"><input value=\"%lus\" name=\"Reboot\"><button type=\"submit\">Reboot</button></form></td></tr>",
+          "<td><form action=\"/SaveParam\" method=\"get\"><input value=\"%lus\" name=\"Reboot\" readonly><button type=\"submit\">Reboot</button></form></td></tr>",
           (millis() - startTime) / 1000);
   message += str;
 
