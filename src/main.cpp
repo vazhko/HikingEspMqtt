@@ -3,35 +3,28 @@
 #include <WiFiUdp.h>
 #include <ESP8266WiFi.h>
 #include <SoftwareSerial.h>
-#include <PubSubClient.h>
-
-#include <ESP8266WiFiMulti.h>
 
 //#include <ESP8266WebServer.h>
 //#include <ESP8266mDNS.h>
 #include "Counter.h"
 #include "webSrv.h"
 #include "Settings.h"
+#include "mqttClient.h"
 
 #define MYPORT_TX D6
 #define MYPORT_RX D5
 #define RS485_TX D7
 
-#define LED D2
-
-void hikingPolling();
-void mqtt_reconnect();
-void WiFiEvent(WiFiEvent_t event);
-void mqtt_callback(char* topic, byte* payload, unsigned int length);
+//void hikingPolling();
+//void mqtt_reconnect();
+//void WiFiEvent(WiFiEvent_t event);
 void counter_callback(Hiking_DDS238_2::results_t);
 bool isServiceMode() { return (0 == digitalRead(D1)); }
 
 SoftwareSerial mySerial;
-WiFiClient espClient;
-PubSubClient mqttClient(espClient);
+
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
-
 
 Counter counter(&mySerial, RS485_TX, counter_callback);
 Settings settings;
@@ -80,12 +73,8 @@ void setup() {
   timeClient.begin();
 
   webSrv::init();
+  mqttClient::init();
 
-  mqttClient.setServer(settings.getSettings().mqttSrvAdr, 1883);
-  mqttClient.setCallback(mqtt_callback);
-
-  pinMode(LED, OUTPUT);
-  digitalWrite(LED, LOW);  
 }
 
 /******************************************************************************************/
@@ -99,10 +88,9 @@ void loop() {
     timeClient.update();
   }
 
-  //if (isServiceMode()) return;
+  // if (isServiceMode()) return;
 
-  mqtt_reconnect();
-  mqttClient.loop();
+  mqttClient::handle();
 }
 
 /******************************************************************************************/
@@ -142,75 +130,11 @@ void counter_callback(Hiking_DDS238_2::results_t res) {
       break;
   }
 
-  mqttClient.publish(settings.getSettings().mqttChannel, mqttStr);
+  mqttClient::publish(settings.getSettings().mqttChannel, mqttStr);
   webSrv::setInfo(res);
 }
 
-/******************************************************************************************/
-void mqtt_reconnect() {
-  typedef enum { mqtt_start,
-                 mqtt_to_connect,
-                 mqtt_connected,
-                 mqtt_wait_connect,
-  } mqtt_state_t;
-  static mqtt_state_t mqtt_state = mqtt_start;
-  static unsigned long time;
-
-  switch (mqtt_state) {
-    default:
-    case mqtt_start:      
-      mqtt_state = mqtt_to_connect;
-      break;
-    case mqtt_connected:      
-      if (mqttClient.connected()) break;      
-      mqtt_state = mqtt_to_connect;
-      break;
-    case mqtt_to_connect:
-      if (mqttClient.connect("arduinoClient", settings.getSettings().mqttUser, settings.getSettings().mqttPassword)) {
-        Serial.println("mqtt connected");
-        digitalWrite(LED, HIGH);
-        mqtt_state = mqtt_connected;        
-        break;
-      } else {
-        time = millis();        
-        Serial.print("mqtt failed to connect, rc=");
-        Serial.print(mqttClient.state());
-        Serial.println(" try again in 5 seconds");
-        digitalWrite(LED, LOW);
-        mqtt_state = mqtt_wait_connect;        
-      }
-      break;
-    case mqtt_wait_connect:
-      if ((millis() - time) < 5000) break;
-      mqtt_state = mqtt_to_connect;
-      break;
-  }
-
-}
-
-/******************************************************************************************/
-void mqtt_callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
-  for (unsigned int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
-  }
-  Serial.println();
-  /*
-  // Switch on the LED if an 1 was received as first character
-  if ((char)payload[0] == '1') {
-    digitalWrite(BUILTIN_LED, LOW);   // Turn the LED on (Note that LOW is the
-  voltage level
-    // but actually the LED is on; this is because
-    // it is active low on the ESP-01)
-  } else {
-    digitalWrite(BUILTIN_LED, HIGH);  // Turn the LED off by making the voltage
-  HIGH
-  }
-  */
-}
-
+/*
 void WiFiEvent(WiFiEvent_t event) {
   switch (event) {
     case WIFI_EVENT_SOFTAPMODE_STACONNECTED:
@@ -227,3 +151,4 @@ void WiFiEvent(WiFiEvent_t event) {
       break;
   }
 }
+*/
