@@ -51,5 +51,6 @@ public:
   void syncSettings();
   void syncData();
   void checkData(double u, double i);
+  bool isServiceMode();
   
 };

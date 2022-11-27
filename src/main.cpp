@@ -15,11 +15,9 @@
 #define MYPORT_RX D5
 #define RS485_TX D7
 
-//void hikingPolling();
-//void mqtt_reconnect();
-//void WiFiEvent(WiFiEvent_t event);
+// void WiFiEvent(WiFiEvent_t event);
 void counter_callback(Hiking_DDS238_2::results_t);
-bool isServiceMode() { return (0 == digitalRead(D1)); }
+
 
 SoftwareSerial mySerial;
 
@@ -35,7 +33,7 @@ void setup() {
   Serial.begin(115200);
   Serial.print("\n\nStart...");
 
-  if (isServiceMode()) {
+  if (settings.isServiceMode()) {
     WiFi.persistent(false);
 
     IPAddress apIP(192, 168, 5, 1);
@@ -74,21 +72,18 @@ void setup() {
 
   webSrv::init();
   mqttClient::init();
-
 }
 
 /******************************************************************************************/
 void loop() {
   webSrv::handle();
   counter.polling();
-  if ((WiFi.status() != WL_CONNECTED) && (!isServiceMode())) {
+  if ((WiFi.status() != WL_CONNECTED) && (!settings.isServiceMode())) {
     Serial.println("\nWiFi not connected, reboot.");
     ESP.restart();
   } else {
     timeClient.update();
   }
-
-  // if (isServiceMode()) return;
 
   mqttClient::handle();
 }
@@ -96,15 +91,15 @@ void loop() {
 /******************************************************************************************/
 void counter_callback(Hiking_DDS238_2::results_t res) {
   const char* mqttStrFormat =
-      "{ \
-  \"voltage\":\"%3.1f\", \
-  \"current\": \"%3.1f\", \
-  \"power\":\"%5.1f\", \
-  \"pf\":\"%1.3f\", \
-  \"f\":\"%2.2f\", \
-  \"total\":\"%d\", \
-  \"status\":\"%d\" \
-  }";
+      "{"
+      "\"voltage\":\"%3.1f\","
+      "\"current\": \"%3.1f\","
+      "\"power\":\"%5.1f\","
+      "\"pf\":\"%1.3f\","
+      "\"f\":\"%2.2f\","
+      "\"total\":\"%d\","
+      "\"status\":\"%d\""
+      "}";
 
   char mqttStr[500];
   if (res.err != Hiking_DDS238_2::errOk) {

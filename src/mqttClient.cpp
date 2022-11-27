@@ -13,7 +13,6 @@ namespace mqttClient {
 void mqtt_reconnect();
 void mqtt_callback(char* topic, byte* payload, unsigned int length);
 
-
 WiFiClient m_espClient;
 PubSubClient m_mqttClient(m_espClient);
 
