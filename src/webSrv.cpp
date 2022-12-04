@@ -168,7 +168,7 @@ function getData() {
       // alert(this.status);
     }
   }
-}
+};
 
 function getParam() {
   // alert("I am an alert box!");
@@ -178,31 +178,33 @@ function getParam() {
   xhttp.onload = function() {
     if (this.status == 200) {
       // alert(this.responseText);
-      var jsonResponse = JSON.parse(this.responseText);
-      //document.getElementById("wifi_ssid").innerHTML = jsonResponse.wifi_ssid;
-      document.getElementById("wifi_ssid").setAttribute("value",jsonResponse.wifi_ssid);
-      document.getElementById("wifi_password").innerHTML = jsonResponse.wifi_password;
-      document.getElementById("mqtt_server").innerHTML = jsonResponse.mqtt_server;
-      document.getElementById("mqtt_channell").innerHTML = jsonResponse.mqtt_channell;
-      document.getElementById("mqtt_user").innerHTML = jsonResponse.mqtt_user;
-      document.getElementById("mqtt_password").innerHTML = jsonResponse.mqtt_password;
+      var jsonResponse = JSON.parse(this.responseText);      
+      document.getElementById("wifi_ssid").value = jsonResponse.wifi_ssid;
+      document.getElementById("wifi_password").value = jsonResponse.wifi_password;
+      document.getElementById("mqtt_server").value = jsonResponse.mqtt_server;
+      document.getElementById("mqtt_channell").value = jsonResponse.mqtt_channell;
+      document.getElementById("mqtt_user").value = jsonResponse.mqtt_user;
+      document.getElementById("mqtt_password").value = jsonResponse.mqtt_password;
 
     } else {
       // alert(this.status);
     }
   }
-}
+};
 
 function save() {
   var xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function() {
-    if (this.readyState == 4 && this.status == 200) {
-      document.getElementById("state").innerHTML = this.responseText;
+  xhttp.open("GET", "param?wifi_ssid="+ document.getElementById("wifi_ssid").value, true);
+  xhttp.send();  
+  xhttp.onload = function() {
+    if (this.status == 200) { 
+      var jsonResponse = JSON.parse(this.responseText);     
+      document.getElementById("wifi_ssid").value =  jsonResponse.wifi_ssid;
     }
   };
-  xhttp.open("GET", "save?state=", true);
-  xhttp.send();
-}
+  
+};
+
 </script>
 </body>
 </html>
@@ -220,6 +222,7 @@ void handleIndex();
 void handleGetData();
 void handleGetParam();
 
+
 ESP8266WebServer webServer(80);
 Hiking_DDS238_2::results_t m_res;
 
@@ -234,8 +237,9 @@ void init() {
   // webServer.on("/", handleRootPath);
   webServer.on("/", handleIndex);
   webServer.on("/data", handleGetData);
-  webServer.on("/SaveParam", handleSaveParam);
+  //webServer.on("/SaveParam", handleSaveParam);
   webServer.on("/param", handleGetParam);
+  //webServer.on("/save", handleSaveParam);
   webServer.onNotFound([]() { webServer.send(404, "text/plain", "Page Not Found\n\n"); });
   webServer.begin();
 }
@@ -268,52 +272,6 @@ void setInfo(char* str) {
 }
 
 /******************************************************************************************/
-void handleSaveParam() {
-  Serial.print("Save");
-  String message = "";
-
-  if (webServer.argName(0) == "SSID") {
-    sprintf(settings.getSettings().ssid, webServer.arg(0).c_str());
-    settings.syncSettings();
-  }
-  if (webServer.argName(0) == "Password") {
-    sprintf(settings.getSettings().password, webServer.arg(0).c_str());
-    settings.syncSettings();
-  }
-  if (webServer.argName(0) == "MQTT server") {
-    sprintf(settings.getSettings().mqttSrvAdr, webServer.arg(0).c_str());
-    settings.syncSettings();
-  }
-  if (webServer.argName(0) == "MQTT channell") {
-    sprintf(settings.getSettings().mqttChannel, webServer.arg(0).c_str());
-    settings.syncSettings();
-  }
-  if (webServer.argName(0) == "MQTT user") {
-    sprintf(settings.getSettings().mqttUser, webServer.arg(0).c_str());
-    settings.syncSettings();
-  }
-  if (webServer.argName(0) == "MQTT password") {
-    sprintf(settings.getSettings().mqttPassword, webServer.arg(0).c_str());
-    settings.syncSettings();
-  }
-  if (webServer.argName(0) == "U max") {
-    settings.resetDataU();
-  }
-  if (webServer.argName(0) == "I max") {
-    settings.resetDataI();
-  }
-  if (webServer.argName(0) == "Reboot") {
-    if (digitalRead(D1)) {
-      Serial.print(" .Pin D1 is 1");
-    } else {
-      Serial.print(" .Pin D1 is 0");
-    }
-    reboot();
-  }
-  webServer.sendHeader("Location", "/");  // Add a header to respond with a new location for the browser to go to the home page again
-  webServer.send(303);
-}
-
 void handleIndex() {
   webServer.send(200, "text/html", mainPage);
 }
@@ -333,6 +291,11 @@ void handleGetParam() {
       "\"mqtt_password\":\"%s\""
       "}";
 
+  String resp = webServer.arg("wifi_ssid");
+  if(resp != ""){
+    webServer.send(200, "text/plane", "{\"wifi_ssid\":\"" + resp + "\"}");
+  }
+
   char str[1000];
   sprintf(str, strFormat,
           settings.getSettings().ssid,
@@ -342,7 +305,8 @@ void handleGetParam() {
           settings.getSettings().mqttUser, 
           settings.getSettings().mqttPassword
   );
-  webServer.send(200, "text/html", str);
+  webServer.send(200, "text/plane", str);
 }
+
 
 }  // namespace webSrv
