@@ -4,9 +4,6 @@
 #include <ESP8266WiFi.h>
 #include <SoftwareSerial.h>
 
-
-//#include <ESP8266WebServer.h>
-//#include <ESP8266mDNS.h>
 #include "dateTime.h"
 #include "Counter.h"
 #include "webSrv.h"
@@ -19,7 +16,6 @@
 
 // void WiFiEvent(WiFiEvent_t event);
 void counter_callback(Hiking_DDS238_2::results_t);
-
 
 SoftwareSerial mySerial;
 
@@ -74,7 +70,7 @@ void setup() {
 
   webSrv::init();
   mqttClient::init();
-  dateTime::init();
+  ///dateTime::init();
 
 
 }
@@ -91,7 +87,7 @@ void loop() {
   }
 
   mqttClient::handle();
-  dateTime::handle();
+  ///dateTime::handle();
 }
 
 /******************************************************************************************/
@@ -132,24 +128,7 @@ void counter_callback(Hiking_DDS238_2::results_t res) {
   }
 
   mqttClient::publish(settings.getSettings().mqttChannel, mqttStr);
-  webSrv::setInfo(res);
+  //webSrv::setInfo(res);
+  webSrv::setInfo(mqttStr);
 }
 
-/*
-void WiFiEvent(WiFiEvent_t event) {
-  switch (event) {
-    case WIFI_EVENT_SOFTAPMODE_STACONNECTED:
-      Serial.println("WIFI_EVENT_SOFTAPMODE_STACONNECTED");
-      Serial.println(WiFi.softAPIP());
-      break;
-    case WIFI_EVENT_SOFTAPMODE_STADISCONNECTED:
-      Serial.println("WIFI_EVENT_SOFTAPMODE_STADISCONNECTED");
-      Serial.println(WiFi.softAPIP());
-      break;
-    default:
-      Serial.print("event ");
-      Serial.println(event);
-      break;
-  }
-}
-*/
