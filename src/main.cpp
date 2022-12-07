@@ -19,60 +19,62 @@ void counter_callback(Hiking_DDS238_2::results_t);
 
 SoftwareSerial mySerial;
 
-//WiFiUDP ntpUDP;
-//NTPClient timeClient(ntpUDP);
+// WiFiUDP ntpUDP;
+// NTPClient timeClient(ntpUDP);
 
 Counter counter(&mySerial, RS485_TX, counter_callback);
 Settings settings;
 
 /******************************************************************************************/
-void setup() {
+void startAP() {
+  WiFi.persistent(false);
+  IPAddress apIP(192, 168, 5, 1);
+  WiFi.disconnect();
+  WiFi.mode(WIFI_OFF);
+  delay(500);
+  WiFi.mode(WIFI_AP);
+  WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+  WiFi.softAP("esp_haking", "12345678");
+  Serial.println("AP \"esp_haking (vv)\" has began");
+  Serial.println(WiFi.softAPSSID());
+  Serial.println(WiFi.softAPIP());
+}
+
+/******************************************************************************************/
+void setup() {  
   delay(1000);
   Serial.begin(115200);
   Serial.print("\n\nStart...");
 
   if (settings.isServiceMode()) {
-    WiFi.persistent(false);
-
-    IPAddress apIP(192, 168, 5, 1);
-    // delay(500);
-    WiFi.disconnect();
-    WiFi.mode(WIFI_OFF);
-    delay(500);
-    WiFi.mode(WIFI_AP);
-    WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-    WiFi.softAP("esp_haking", "12345678");
-    // Serial.println("AP \"esp_haking (vv)\" has began");
-
-    Serial.println(WiFi.softAPSSID());
-    Serial.println(WiFi.softAPIP());
-
+    startAP();
   } else {
     Serial.print("Connecting to ");
     Serial.println(settings.getSettings().ssid);
     WiFi.begin(settings.getSettings().ssid, settings.getSettings().password);
 
-    while (WiFi.status() != WL_CONNECTED) {
+    uint8_t tres = 10;
+    while ((WiFi.status() != WL_CONNECTED) && (tres > 0)) {
       delay(500);
       Serial.print(".");
+      tres--;
     }
-    // WiFi.onEvent(WiFiEvent);
-
-    Serial.println("");
-    Serial.println("WiFi connected.");
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
+    if (tres == 0) {
+      startAP();
+    } else {
+      Serial.println("");
+      Serial.println("WiFi connected.");
+      Serial.println("IP address: ");
+      Serial.println(WiFi.localIP());
+    }
   }
 
   mySerial.begin(9600, SWSERIAL_8N1, MYPORT_RX, MYPORT_TX, false);
 
-  ///timeClient.begin();
-
+  /// timeClient.begin();
   webSrv::init();
   mqttClient::init();
-  ///dateTime::init();
-
-
+  /// dateTime::init();
 }
 
 /******************************************************************************************/
@@ -83,11 +85,11 @@ void loop() {
     Serial.println("\nWiFi not connected, reboot.");
     ESP.restart();
   } else {
-    ///timeClient.update();
+    /// timeClient.update();
   }
 
   mqttClient::handle();
-  ///dateTime::handle();
+  /// dateTime::handle();
 }
 
 /******************************************************************************************/
@@ -128,7 +130,6 @@ void counter_callback(Hiking_DDS238_2::results_t res) {
   }
 
   mqttClient::publish(settings.getSettings().mqttChannel, mqttStr);
-  //webSrv::setInfo(res);
+  // webSrv::setInfo(res);
   webSrv::setInfo(mqttStr);
 }
-

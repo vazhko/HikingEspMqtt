@@ -1,0 +1,8 @@
+{
+"wifi_ssid": "Keenetic-2568",
+"wifi_password": "6xDWi7@q",
+"mqtt_server": "192.168.1.105",
+"mqtt_user": "root",
+"mqtt_password": "vv",
+"mqtt_channell": "esp/hiking/all"
+}
