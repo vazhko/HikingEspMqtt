@@ -85,27 +85,36 @@ void handleGetParam() {
       "\"mqtt_channell\":\"%s\""
       "}";
 
-  const String tasks[] = {"wifi_ssid", "wifi_password", "mqtt_server", "mqtt_user", "mqtt_password", "mqtt_channell", "reboot"};  
-  for (int i = 0; i < 7; i++) {
+  const String tasks[] = {"wifi_ssid", "wifi_password", "mqtt_server", "mqtt_user", "mqtt_password", "mqtt_channell", "reboot", "u_max", "i_max"};  
+  for (int i = 0; i < 9; i++) {
     String resp = webServer.arg(tasks[i]);
     if (resp != "") {          
       if (i == 0) {
         Serial.println(resp.c_str());  
         strcpy(settings.getSettings().ssid, resp.c_str());
+        settings.syncSettings();
       } else if (i == 1){
-        strcpy(settings.getSettings().password, resp.c_str());      
+        strcpy(settings.getSettings().password, resp.c_str()); 
+        settings.syncSettings();     
       } else if (i == 2){
-        strcpy(settings.getSettings().mqttSrvAdr, resp.c_str());        
+        strcpy(settings.getSettings().mqttSrvAdr, resp.c_str()); 
+        settings.syncSettings();       
       } else if (i == 3){
         strcpy(settings.getSettings().mqttUser, resp.c_str());
+        settings.syncSettings();
       } else if (i == 4){
         strcpy(settings.getSettings().mqttUser, resp.c_str());
+        settings.syncSettings();
       } else if (i == 5){
         strcpy(settings.getSettings().mqttChannel, resp.c_str());
+        settings.syncSettings();
       } else if (i == 6){
         reboot();
-      }
-      if (i != 6)settings.syncSettings();
+      } else if (i == 7){
+        settings.resetDataU();        
+      }else if (i == 8){
+        settings.resetDataI();
+      }      
 
       webServer.send(200, "text/plane", "{\"" + tasks[i] + "\":\"" + resp + "\"}");
       return;

@@ -1,5 +1,5 @@
 #include "Arduino.h"
-//#include <NTPClient.h>
+// #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <ESP8266WiFi.h>
 #include <SoftwareSerial.h>
@@ -41,7 +41,7 @@ void startAP() {
 }
 
 /******************************************************************************************/
-void setup() {  
+void setup() {
   delay(1000);
   Serial.begin(115200);
   Serial.print("\n\nStart...");
@@ -95,6 +95,7 @@ void loop() {
 
 /******************************************************************************************/
 void counter_callback(Hiking_DDS238_2::results_t res) {
+  static uint32_t allCnt, badCnt;
   const char* mqttStrFormat =
       "{"
       "\"voltage\":\"%3.1f\","
@@ -103,12 +104,18 @@ void counter_callback(Hiking_DDS238_2::results_t res) {
       "\"pf\":\"%1.3f\","
       "\"f\":\"%2.2f\","
       "\"total\":\"%d\","
+      "\"u_max\":\"%3.1f\","
+      "\"i_max\":\"%3.1f\","
+      "\"all_req\":\"%d\","
+      "\"bad_req\":\"%d\","
       "\"status\":\"%d\""
       "}";
 
+  allCnt ++;
   char mqttStr[500];
   if (res.err != Hiking_DDS238_2::errOk) {
     sprintf(mqttStr, "{\"status\":\"%d\"}", res.err);
+    badCnt ++;
   }
 
   switch (res.err) {
@@ -122,8 +129,10 @@ void counter_callback(Hiking_DDS238_2::results_t res) {
       Serial.println("Hiking: errUnk");
       break;
     case Hiking_DDS238_2::errOk:
-      sprintf(mqttStr, mqttStrFormat, res.u, res.i, res.p, res.pf, res.f,
-              res.totalCnt, res.err);
+      sprintf(mqttStr, mqttStrFormat, res.u, res.i, res.p, res.pf, res.f, res.totalCnt,
+              settings.getData().voltageMax.val, settings.getData().currentMax.val,
+              allCnt, badCnt,
+              res.err);
       Serial.println("Hiking: ");
       Serial.println(mqttStr);
       settings.checkData(res.u, res.i);

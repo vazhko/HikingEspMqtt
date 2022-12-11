@@ -99,21 +99,15 @@ caption {
     </caption>
     <tr>
       <td style="width: 50%;">U max</td>
-      <td><form action="SaveParam" method="get">
-          <input value="0" name="U max">
-          <button type="submit">Reset </button>
-        </form></td>
+      <td><input type="text" id="u_max" value="ND" readonly><button class="button" onclick="save('u_max')">Reset</button></td>
     </tr>
     <tr>
       <td>I max</td>
-      <td><form action="SaveParam" method="get">
-          <input value="0" name="I max">
-          <button type="submit">Reset </button>
-        </form></td>
+      <td><input type="text" id="i_max" value="ND" readonly><button class="button" onclick="save('i_max')">Reset</button></td>
     </tr>
     <tr>
       <td>Working time, s</td>
-      <td><input type="text" id="workingTime" value="?">
+      <td><input type="text" id="workingTime" value="?" readonly>
         <button class="button" onclick="reboot()">Reboot</button></td>
     </tr>
   </table>
@@ -146,6 +140,9 @@ function getData() {
       document.getElementById("errcode").innerHTML = jsonResponse.status;
       document.getElementById("total").innerHTML = jsonResponse.total;
 
+      document.getElementById("u_max").value = jsonResponse.u_max;
+      document.getElementById("i_max").value = jsonResponse.i_max;
+
     } else {
       // alert(this.status);
     }
@@ -166,8 +163,8 @@ function getParam() {
       if(jsonResponse.mqtt_server != undefined) document.getElementById("mqtt_server").value = jsonResponse.mqtt_server;      
       if(jsonResponse.mqtt_user != undefined) document.getElementById("mqtt_user").value = jsonResponse.mqtt_user;
       if(jsonResponse.mqtt_password != undefined) document.getElementById("mqtt_password").value = jsonResponse.mqtt_password;
-	  if(jsonResponse.mqtt_channell != undefined) document.getElementById("mqtt_channell").value = jsonResponse.mqtt_channell;
-	  if(jsonResponse.reboot != undefined) document.getElementById("workingTime").value = "Rebooting...";
+	    if(jsonResponse.mqtt_channell != undefined) document.getElementById("mqtt_channell").value = jsonResponse.mqtt_channell;
+	    if(jsonResponse.reboot != undefined) document.getElementById("workingTime").value = "Rebooting...";
 
     } else {
       // alert(this.status);
