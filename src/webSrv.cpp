@@ -1,13 +1,12 @@
 #include "Arduino.h"
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
-//#include <NTPClient.h>
-//#include <ezTime.h>
+// #include <NTPClient.h>
+// #include <ezTime.h>
 
 #include "Hiking-DDS238-2.h"
 #include "Settings.h"
 #include "mainHtmlPage.h"
-
 
 extern Hiking_DDS238_2 counter;
 extern Settings settings;
@@ -32,7 +31,6 @@ String dataStr = "{}";
 
 /******************************************************************************************/
 void init() {
-
   webServer.on("/", handleIndex);
   webServer.on("/data", handleGetData);
   webServer.on("/param", handleGetParam);
@@ -87,12 +85,30 @@ void handleGetParam() {
       "\"mqtt_channell\":\"%s\""
       "}";
 
-  const String tasks[] = {"wifi_ssid", "wifi_password", "mqtt_server", "mqtt_user", "mqtt_password", "mqtt_channell", "reboot"};
-  for (int i = 0; i < 7; i ++) {
+  const String tasks[] = {"wifi_ssid", "wifi_password", "mqtt_server", "mqtt_user", "mqtt_password", "mqtt_channell", "reboot"};  
+  for (int i = 0; i < 7; i++) {
     String resp = webServer.arg(tasks[i]);
-    if (resp != "") {
+    if (resp != "") {          
+      if (i == 0) {
+        Serial.println(resp.c_str());  
+        strcpy(settings.getSettings().ssid, resp.c_str());
+      } else if (i == 1){
+        strcpy(settings.getSettings().password, resp.c_str());      
+      } else if (i == 2){
+        strcpy(settings.getSettings().mqttSrvAdr, resp.c_str());        
+      } else if (i == 3){
+        strcpy(settings.getSettings().mqttUser, resp.c_str());
+      } else if (i == 4){
+        strcpy(settings.getSettings().mqttUser, resp.c_str());
+      } else if (i == 5){
+        strcpy(settings.getSettings().mqttChannel, resp.c_str());
+      } else if (i == 6){
+        reboot();
+      }
+      if (i != 6)settings.syncSettings();
+
       webServer.send(200, "text/plane", "{\"" + tasks[i] + "\":\"" + resp + "\"}");
-      if(i == 6) reboot();
+      return;
     }
   }
 

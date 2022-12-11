@@ -17,11 +17,12 @@ Settings::Settings() {
   delay(5);
 
   m_preferences.begin(namespaceStr);
-
+  m_manualServiceMode = 0;
   // reset
   if (isServiceMode()) {
     setDefault();
     resetData();
+    m_manualServiceMode = 1;
   }
 
   if (!m_preferences.isKey(settingsStr)) {
@@ -79,5 +80,9 @@ void Settings::checkData(double u, double i) {
 }
 
 bool Settings::isServiceMode() {
-  return (0 == digitalRead(D1));
+  return m_manualServiceMode || (0 == digitalRead(D1));
+}
+
+void Settings::setServiceMode(bool s) {
+   m_manualServiceMode = s;  
 }

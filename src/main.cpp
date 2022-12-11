@@ -53,13 +53,14 @@ void setup() {
     Serial.println(settings.getSettings().ssid);
     WiFi.begin(settings.getSettings().ssid, settings.getSettings().password);
 
-    uint8_t tres = 10;
-    while ((WiFi.status() != WL_CONNECTED) && (tres > 0)) {
+    uint8_t tryes = 20;
+    while ((WiFi.status() != WL_CONNECTED) && (tryes > 0)) {
       delay(500);
       Serial.print(".");
-      tres--;
+      tryes--;
     }
-    if (tres == 0) {
+    if (tryes == 0) {
+      settings.setServiceMode(true);
       startAP();
     } else {
       Serial.println("");

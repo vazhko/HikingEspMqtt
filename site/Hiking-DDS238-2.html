@@ -19,7 +19,7 @@ caption {
 </style>
 <title>Hiking-DDS238</title>
 </head>
-<body onload="getParam()">
+<body onload="loadPage()">
 <div style="width:800px; margin:0 auto;">
   <h3>Hiking-DDS238-2</h3>
   <table>
@@ -29,33 +29,33 @@ caption {
     <tr>
       <td style="width: 50%;">WiFi SSID</td>
       <td><input type="text" id="wifi_ssid" value="?">
-        <button class="button" onclick="save("wifi_ssid")">Save</button></td>
+        <button class="button" onclick="save('wifi_ssid')">Save</button></td>
     </tr>
     <tr>
       <td>WiFi Password</td>
       <td><input type="text" id="wifi_password" value="?">
-        <button class="button" onclick="save("wifi_password")">Save</button></td>
+        <button class="button" onclick="save('wifi_password')">Save</button></td>
     </tr>
     <tr>
       <td>MQTT server</td>
       <td><input type="text" id="mqtt_server" value="?">
-        <button class="button" onclick="save("mqtt_server")">Save</button></td>
+        <button class="button" onclick="save('mqtt_server')">Save</button></td>
     </tr>
     <tr>
       <td>MQTT user</td>
       <td><input type="text" id="mqtt_user" value="?">
-        <button class="button" onclick="save("mqtt_user")">Save</button></td>
+        <button class="button" onclick="save('mqtt_user')">Save</button></td>
     </tr>
     <tr>
       <td>MQTT password</td>
       <td><input type="text" id="mqtt_password" value="?">
-        <button class="button" onclick="save("mqtt_password")">Save</button></td>
+        <button class="button" onclick="save('mqtt_password')">Save</button></td>
         </td>
     </tr>
     <tr>
       <td>MQTT channell</td>
       <td><input type="text" id="mqtt_channell" value="?">
-        <button class="button" onclick="save("mqtt_channell")">Save</button></td>
+        <button class="button" onclick="save('mqtt_channell')">Save</button></td>
     </tr>
   </table>
   <br>
@@ -114,7 +114,7 @@ caption {
     <tr>
       <td>Working time, s</td>
       <td><input type="text" id="workingTime" value="?">
-        <button class="button" onclick="reboot()">Save</button></td>
+        <button class="button" onclick="reboot()">Reboot</button></td>
     </tr>
   </table>
   <br>
@@ -122,7 +122,12 @@ caption {
 <a href="data">data</a> <a href="param">param</a> 
 <script>
 
-setInterval( function() { getData(); getParam();}, 10000);
+setInterval( function() { getData();}, 6000);
+
+function loadPage() {
+	getParam();
+	getData();
+};
 
 function getData() {
   // alert("I am an alert box!");

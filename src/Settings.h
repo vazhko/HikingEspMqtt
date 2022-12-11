@@ -32,6 +32,7 @@ class Settings {
   Preferences m_preferences;
   settings_t m_settings;
   data_t m_data;
+  bool m_manualServiceMode;
 public:
   Settings();
   settings_t &getSettings(){
@@ -52,5 +53,6 @@ public:
   void syncData();
   void checkData(double u, double i);
   bool isServiceMode();
+  void setServiceMode(bool s);
   
 };
