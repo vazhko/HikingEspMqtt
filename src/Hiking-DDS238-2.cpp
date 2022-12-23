@@ -136,3 +136,8 @@ void Hiking_DDS238_2::extractResults() {
   m_results.f = getCounterF();
   m_results.totalCnt = getCounterTotal();
 }
+
+/******************************************************************************************/
+char *Hiking_DDS238_2::statusToStr(err_t e){
+  return "";
+}

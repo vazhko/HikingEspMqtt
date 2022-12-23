@@ -80,7 +80,7 @@ void Settings::checkData(double u, double i) {
 }
 
 bool Settings::isServiceMode() {
-  return m_manualServiceMode || (0 == digitalRead(D1));
+  return m_manualServiceMode /*|| (0 == digitalRead(D1))*/;
 }
 
 void Settings::setServiceMode(bool s) {

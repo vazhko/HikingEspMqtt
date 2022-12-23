@@ -73,5 +73,5 @@ public:
   results_t& getResults() {
     return m_results;
   }
-
+  char *statusToStr(err_t e);
 };

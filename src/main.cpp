@@ -10,9 +10,9 @@
 #include "Settings.h"
 #include "mqttClient.h"
 
-#define MYPORT_TX D6
-#define MYPORT_RX D5
-#define RS485_TX D7
+#define MYPORT_TX D7
+#define MYPORT_RX D6
+#define RS485_TX D5
 
 // void WiFiEvent(WiFiEvent_t event);
 void counter_callback(Hiking_DDS238_2::results_t);
@@ -34,7 +34,7 @@ void startAP() {
   delay(500);
   WiFi.mode(WIFI_AP);
   WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-  WiFi.softAP("esp_haking", "12345678");
+  WiFi.softAP("esp_haking", "31415926");
   Serial.println("AP \"esp_haking (vv)\" has began");
   Serial.println(WiFi.softAPSSID());
   Serial.println(WiFi.softAPIP());
@@ -80,9 +80,21 @@ void setup() {
 
 /******************************************************************************************/
 void loop() {
+  
   webSrv::handle();
   counter.polling();
-  if ((WiFi.status() != WL_CONNECTED) && (!settings.isServiceMode())) {
+  static unsigned long ms = millis();
+  //Перезавантажуємо AP через 10 хв., щоб не залишалось в такому режимі постійно. При вимкнненні світла.
+  if (WiFi.getMode() == WIFI_AP){
+    if((millis() - ms) > 60000){
+      if(WiFi.status() == WL_CONNECTED){
+        // продовжуємо
+        ms = millis();
+      } else {
+        ESP.restart();
+      }
+    }
+  } else if ((WiFi.status() != WL_CONNECTED) && (!settings.isServiceMode())) {
     Serial.println("\nWiFi not connected, reboot.");
     ESP.restart();
   } else {
