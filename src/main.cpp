@@ -111,7 +111,7 @@ void counter_callback(Hiking_DDS238_2::results_t res) {
   const char* mqttStrFormat =
       "{"
       "\"voltage\":\"%3.1f\","
-      "\"current\": \"%3.1f\","
+      "\"current\":\"%3.1f\","
       "\"power\":\"%5.1f\","
       "\"pf\":\"%1.3f\","
       "\"f\":\"%2.2f\","
@@ -120,7 +120,7 @@ void counter_callback(Hiking_DDS238_2::results_t res) {
       "\"i_max\":\"%3.1f\","
       "\"all_req\":\"%d\","
       "\"bad_req\":\"%d\","
-      "\"status\":\"%d\""
+      "\"status\":\"%s\""
       "}";
 
   allCnt ++;
@@ -144,7 +144,7 @@ void counter_callback(Hiking_DDS238_2::results_t res) {
       sprintf(mqttStr, mqttStrFormat, res.u, res.i, res.p, res.pf, res.f, res.totalCnt,
               settings.getData().voltageMax.val, settings.getData().currentMax.val,
               allCnt, badCnt,
-              res.err);
+              Hiking_DDS238_2::statusToStr(res.err));
       Serial.println("Hiking: ");
       Serial.println(mqttStr);
       settings.checkData(res.u, res.i);

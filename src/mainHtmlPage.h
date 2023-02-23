@@ -91,7 +91,7 @@ caption {
       <td><span id="total">ND</span></td>
     </tr>
     <tr>
-      <td>Error code</td>
+      <td>Status</td>
       <td><span id="errcode">ND</span></td>
     </tr>
   </table>
@@ -102,11 +102,17 @@ caption {
     </caption>
     <tr>
       <td style="width: 50%;">U max</td>
-      <td><input type="text" id="u_max" value="ND" readonly><button class="button" onclick="save('u_max')">Reset</button></td>
+      <td><input type="text" id="u_max" value="ND" readonly>
+        <button class="button" onclick="save('u_max')">Reset</button></td>
     </tr>
     <tr>
       <td>I max</td>
-      <td><input type="text" id="i_max" value="ND" readonly><button class="button" onclick="save('i_max')">Reset</button></td>
+      <td><input type="text" id="i_max" value="ND" readonly>
+        <button class="button" onclick="save('i_max')">Reset</button></td>
+    </tr>
+    <tr>
+      <td>RS-485 Errors</td>
+      <td><input type="text" id="rs485" value="ND" readonly></td>
     </tr>
     <tr>
       <td>Working time, s</td>
@@ -139,12 +145,15 @@ function getData() {
       document.getElementById("current").innerHTML = jsonResponse.current;
       document.getElementById("power").innerHTML = jsonResponse.power;
       document.getElementById("pf").innerHTML = jsonResponse.pf;
-      document.getElementById("f").innerHTML = jsonResponse.f;
-      document.getElementById("errcode").innerHTML = jsonResponse.status;
+      document.getElementById("f").innerHTML = jsonResponse.f;      
       document.getElementById("total").innerHTML = jsonResponse.total;
+	  document.getElementById("errcode").innerHTML = jsonResponse.status;
 
       document.getElementById("u_max").value = jsonResponse.u_max;
       document.getElementById("i_max").value = jsonResponse.i_max;
+	  
+	  document.getElementById("rs485").value = (jsonResponse.bad_req *100.0/jsonResponse.all_req).toFixed(2) + '%';
+	  
 
     } else {
       // alert(this.status);
@@ -166,8 +175,8 @@ function getParam() {
       if(jsonResponse.mqtt_server != undefined) document.getElementById("mqtt_server").value = jsonResponse.mqtt_server;      
       if(jsonResponse.mqtt_user != undefined) document.getElementById("mqtt_user").value = jsonResponse.mqtt_user;
       if(jsonResponse.mqtt_password != undefined) document.getElementById("mqtt_password").value = jsonResponse.mqtt_password;
-	    if(jsonResponse.mqtt_channell != undefined) document.getElementById("mqtt_channell").value = jsonResponse.mqtt_channell;
-	    if(jsonResponse.reboot != undefined) document.getElementById("workingTime").value = "Rebooting...";
+	  if(jsonResponse.mqtt_channell != undefined) document.getElementById("mqtt_channell").value = jsonResponse.mqtt_channell;
+	  if(jsonResponse.reboot != undefined) document.getElementById("workingTime").value = "Rebooting...";
 
     } else {
       // alert(this.status);

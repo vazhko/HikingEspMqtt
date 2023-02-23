@@ -138,6 +138,20 @@ void Hiking_DDS238_2::extractResults() {
 }
 
 /******************************************************************************************/
-char *Hiking_DDS238_2::statusToStr(err_t e){
+const char *Hiking_DDS238_2::statusToStr(err_t e){
+  switch(e){
+    case errOk:
+      return "RS-485: Ok";
+    break;
+    case errTimeout:
+      return "RS-485: Err: timeout";
+    break;   
+    case errCs:
+      return "RS-485: Err: CS";
+    break;
+    case errUnk:
+      return "RS-485: Err: Unknown";
+    break;  
+  }
   return "";
 }
